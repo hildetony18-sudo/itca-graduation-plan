@@ -1,0 +1,823 @@
+<title>ITCA Graduation Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --ink:#1b2230;
+    --ink-soft:#4a5468;
+    --line:#c9d0dd;
+    --line-soft:#dfe4ee;
+    --paper:#f4f5f8;
+    --card:#ffffff;
+    --card-2:#eef1f6;
+    --navy:#1f3a68;
+    --navy-deep:#152a4d;
+    --brick:#b8391f;
+    --brick-deep:#8f2c17;
+    --brick-wash:#fdf1ee;
+    --green:#2f6f4e;
+    --green-wash:#eaf5ee;
+    --amber:#a8710a;
+    --focus:#2f6f9e;
+    --shadow: 0 1px 2px rgba(27,34,48,.06), 0 8px 20px -12px rgba(27,34,48,.18);
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#e8ebf2;
+      --ink-soft:#a8b0c2;
+      --line:#333f56;
+      --line-soft:#2a3348;
+      --paper:#11151f;
+      --card:#171d2b;
+      --card-2:#1c2334;
+      --navy:#7fa6dd;
+      --navy-deep:#a9c4e8;
+      --brick:#e0765a;
+      --brick-deep:#f0a186;
+      --brick-wash:#2a1b17;
+      --green:#7bc99a;
+      --green-wash:#152720;
+      --amber:#e0b055;
+      --focus:#7fb4dd;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#e8ebf2;
+    --ink-soft:#a8b0c2;
+    --line:#333f56;
+    --line-soft:#2a3348;
+    --paper:#11151f;
+    --card:#171d2b;
+    --card-2:#1c2334;
+    --navy:#7fa6dd;
+    --navy-deep:#a9c4e8;
+    --brick:#e0765a;
+    --brick-deep:#f0a186;
+    --brick-wash:#2a1b17;
+    --green:#7bc99a;
+    --green-wash:#152720;
+    --amber:#e0b055;
+    --focus:#7fb4dd;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Work Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background: var(--focus); color:#fff; }
+
+  h1,h2,h3{ font-family:'Oswald', system-ui, sans-serif; text-wrap:balance; margin:0; }
+
+  .code, .credit-tag, .totalnum{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+  a{ color:var(--focus); }
+
+  button, select, input{ font-family:inherit; }
+
+  /* ---------- Shell ---------- */
+  .wrap{ max-width:1320px; margin:0 auto; padding: 22px 22px 60px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    display:flex; align-items:center; gap:18px;
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    border-radius:14px;
+    padding:20px 26px;
+    box-shadow: var(--shadow);
+    color:#f4f7fc;
+  }
+  :root[data-theme="dark"] .masthead, @media (prefers-color-scheme: dark){ }
+  .badge{
+    flex: 0 0 auto;
+    width:52px; height:52px; border-radius:12px;
+    background: rgba(255,255,255,.14);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Oswald', sans-serif; font-weight:700; font-size:20px;
+    color:#fff; letter-spacing:.02em;
+    border:1px solid rgba(255,255,255,.28);
+  }
+  .masthead-title{ flex: 1 1 auto; min-width:220px; }
+  .eyebrow{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:#c9d8f2; font-weight:600; margin:0 0 2px;
+  }
+  .masthead h1{
+    font-size: clamp(22px, 2.6vw, 32px);
+    font-weight:700; letter-spacing:.01em; color:#fff;
+  }
+  .masthead .org{
+    font-size:13px; color:#cfdcf3; margin-top:3px;
+  }
+  .masthead-actions{
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .btn{
+    appearance:none; border:1px solid rgba(255,255,255,.35);
+    background: rgba(255,255,255,.08); color:#fff;
+    padding:9px 14px; border-radius:9px; font-size:13px; font-weight:600;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+    transition: background .15s ease, transform .1s ease;
+  }
+  .btn:hover{ background: rgba(255,255,255,.18); }
+  .btn:active{ transform: translateY(1px); }
+  .btn:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+  .btn-primary{ background:#fff; color:var(--navy-deep); border-color:#fff; }
+  .btn-primary:hover{ background:#eef3fb; }
+
+  /* ---------- Identity bar (name / date / pathway / total) ---------- */
+  .idbar{
+    margin-top:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow: var(--shadow);
+    padding:16px 20px;
+    display:grid;
+    grid-template-columns: 1.3fr 1fr 1.3fr auto;
+    gap:16px;
+    align-items:end;
+  }
+  .field label, .stat label{
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--ink-soft); font-weight:600; margin-bottom:6px;
+  }
+  .field input[type="text"], .field input[type="date"]{
+    width:100%; border:1px solid var(--line); border-radius:8px;
+    padding:9px 11px; font-size:14.5px; color:var(--ink); background:var(--paper);
+  }
+  .field input:focus-visible{ outline:2px solid var(--focus); outline-offset:1px; }
+  .pathway-select{
+    width:100%; border:1.5px solid var(--brick); border-radius:8px;
+    padding:9px 34px 9px 11px; font-size:14.5px; font-weight:600; color:var(--brick-deep);
+    background:var(--brick-wash);
+    appearance:none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%238f2c17'><path d='M5.5 7.5l4.5 4.5 4.5-4.5' stroke='%238f2c17' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position: right 10px center; background-size:16px;
+  }
+  .pathway-select:focus-visible{ outline:2px solid var(--focus); outline-offset:1px; }
+  .stat{ text-align:right; min-width:118px; }
+  .stat .totalnum{ font-size:26px; font-weight:600; color:var(--green); line-height:1; }
+  .stat .totalnum .of{ font-size:14px; color:var(--ink-soft); font-weight:500; }
+  .stat .bar{ height:6px; border-radius:4px; background:var(--line-soft); margin-top:8px; overflow:hidden; }
+  .stat .bar > i{ display:block; height:100%; width:0%; background:var(--green); transition:width .25s ease; }
+
+  /* ---------- Board layout ---------- */
+  .board{
+    margin-top:16px;
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:16px;
+    align-items:start;
+  }
+  .col{ display:flex; flex-direction:column; gap:14px; }
+
+  .panel{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    padding:11px 16px;
+    font-family:'Oswald', sans-serif;
+    font-size:13.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+    color:#fff; background:var(--navy);
+  }
+  .panel-head .credits{ font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:11.5px; letter-spacing:.03em; opacity:.9; }
+  .panel-body{ padding:10px 8px; }
+
+  .row{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:7px 8px; border-radius:8px;
+    cursor:pointer;
+  }
+  .row:hover{ background:var(--card-2); }
+  .row.done .rowtext{ color:var(--ink-soft); text-decoration: line-through; text-decoration-color: var(--line); text-decoration-thickness:1.5px; }
+
+  .chk{
+    flex:0 0 auto; width:18px; height:18px; margin-top:2px;
+    border-radius:5px; border:1.6px solid var(--line);
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .row.done .chk{ background:var(--green); border-color:var(--green); }
+  .chk svg{ width:12px; height:12px; opacity:0; transform:scale(.6); transition:opacity .1s ease, transform .1s ease; }
+  .row.done .chk svg{ opacity:1; transform:scale(1); }
+  input.chk-native{ position:absolute; opacity:0; width:18px; height:18px; cursor:pointer; }
+  .chk-wrap{ position:relative; }
+  .row:focus-within .chk{ outline:2px solid var(--focus); outline-offset:2px; }
+
+  .rowtext{ font-size:13.6px; line-height:1.35; flex:1 1 auto; }
+  .rowtext .sem{ color: var(--ink-soft); font-weight:500; }
+
+  .row-input .rowtext{ display:flex; }
+  .elective-input{
+    flex:1 1 auto; border:none; border-bottom:1px dashed var(--line);
+    background:transparent; font-size:13.6px; color:var(--ink);
+    padding:1px 2px; font-family:inherit;
+  }
+  .elective-input:focus-visible{ outline:none; border-bottom-color: var(--focus); }
+  .elective-input::placeholder{ color:var(--ink-soft); opacity:.65; }
+
+  select.inline-select{
+    flex:1 1 auto; border:1px solid var(--line); border-radius:6px;
+    background:var(--paper); color:var(--ink); font-size:13px; padding:4px 6px;
+  }
+
+  .divider-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; font-weight:700;
+    color: var(--ink-soft); padding: 10px 10px 3px;
+  }
+
+  /* two sub-columns inside one requirements panel isn't used; core spans two panel columns instead */
+
+  /* ---------- Pathway (3rd column) ---------- */
+  .pathway-panel{
+    border:2px solid var(--ink);
+    border-radius:14px;
+    overflow:hidden;
+    background:var(--card);
+    box-shadow: var(--shadow);
+  }
+  .pathway-head{
+    background: var(--brick);
+    color:#fff8f5;
+    padding:14px 16px 12px;
+  }
+  .pathway-head .eyebrow2{
+    font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; opacity:.85;
+  }
+  .pathway-head h2{ font-size:20px; font-weight:600; margin-top:2px; }
+  .pathway-body{ padding: 6px 8px 4px; }
+  .year-block + .year-block{ margin-top:2px; }
+  .year-title{
+    font-family:'Oswald',sans-serif; font-size:12.5px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--brick-deep);
+    padding: 12px 8px 4px;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .year-title .credits{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); font-weight:500; }
+
+  .cert-section{ border-top:1px solid var(--line); margin-top:6px; }
+  .cert-head{
+    background:var(--ink); color:var(--paper);
+    padding:9px 16px; font-family:'Oswald',sans-serif; font-size:13px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase;
+  }
+  :root[data-theme="dark"] .cert-head{ background:var(--card-2); color:var(--ink); }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .cert-head{ background:var(--card-2); color:var(--ink); } }
+
+  .sub-label{ padding:8px 16px 2px; font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft); font-weight:700; }
+
+  .notes-section{ border-top:1px solid var(--line); }
+  .notes-head{ padding:9px 16px 0; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); font-weight:600; }
+  .notes-area{
+    width:100%; min-height:110px; border:none; resize:vertical;
+    background:transparent; color:var(--ink); font-size:13px; padding:8px 16px 16px;
+    font-family:inherit;
+  }
+  .notes-area:focus-visible{ outline:none; }
+
+  .empty-pathway{
+    padding:22px 16px 26px; color:var(--ink-soft); font-size:13.5px; line-height:1.5;
+  }
+
+  /* ---------- Additional requirements chips ---------- */
+  .task-row .chk{ border-radius:50%; }
+
+  /* ---------- Footer note ---------- */
+  .footnote{
+    margin-top:16px; font-size:12px; color:var(--ink-soft); line-height:1.6;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 16px;
+  }
+  .footnote b{ color:var(--ink); }
+
+  @media (max-width: 980px){
+    .board{ grid-template-columns: 1fr; }
+    .idbar{ grid-template-columns: 1fr 1fr; }
+    .idbar .stat{ text-align:left; }
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{ background:#fff; }
+    .no-print{ display:none !important; }
+    .wrap{ padding:6px; max-width:100%; }
+    .board{ grid-template-columns: 1fr 1fr 1fr; gap:8px; }
+    .panel, .pathway-panel, .idbar, .masthead{ box-shadow:none; break-inside:avoid; }
+    .masthead{ background:#1f3a68 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .panel-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .pathway-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="badge" aria-hidden="true">ITCA</div>
+    <div class="masthead-title">
+      <p class="eyebrow">Idaho Technical Career Academy</p>
+      <h1>ITCA Graduation Plan</h1>
+      <p class="org">Idaho graduation requirements &middot; Class of 2027 &middot; all CTE pathways</p>
+    </div>
+    <div class="masthead-actions no-print">
+      <button class="btn" id="resetBtn" type="button">Reset form</button>
+      <button class="btn btn-primary" id="printBtn" type="button">Print / Save PDF</button>
+    </div>
+  </header>
+
+  <section class="idbar">
+    <div class="field">
+      <label for="studentName">Student name</label>
+      <input type="text" id="studentName" placeholder="First and last name" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="gradDate">Expected graduation date</label>
+      <input type="text" id="gradDate" placeholder="May 2027" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="pathwaySelect">CTE pathway</label>
+      <select id="pathwaySelect" class="pathway-select"></select>
+    </div>
+    <div class="stat">
+      <label>Core credits earned</label>
+      <div class="totalnum"><span id="coreTotal">0</span><span class="of"> / 46</span></div>
+      <div class="bar"><i id="coreBar"></i></div>
+    </div>
+  </section>
+
+  <main class="board">
+    <!-- Column 1 -->
+    <div class="col" id="col1"></div>
+    <!-- Column 2 -->
+    <div class="col" id="col2"></div>
+    <!-- Column 3: pathway -->
+    <div class="col" id="col3"></div>
+  </main>
+
+  <p class="footnote">
+    Core credit structure follows Idaho graduation rule IDAPA 08.02.03.105 (English 8 &middot; Communications/Speech 1 &middot; Math 6 &middot; Science 6 &middot; Social Studies 5 &middot; Humanities/Fine Arts 2 &middot; Health 1 &middot; Digital Literacy 1 &middot; electives 16) for a <b>46-credit total</b>, matching the plan ITCA uses for the Class of 2027. Digital Literacy is marked <b>**</b> because the state rule applies it to students graduating after January&nbsp;1, 2028 &mdash; ITCA includes it now as a local requirement. Selecting a pathway on the right fills in that pathway's year-by-year coursework and industry certifications automatically; switching pathways clears pathway-specific checks but never touches your core progress or elective notes.
+  </p>
+</div>
+
+<script>
+(function(){
+
+  /* ---------------- Data ---------------- */
+
+  // Core, non-pathway requirements. Every checkbox = 1 credit unless creditless:true.
+  const CORE_COL1 = [
+    { title:"English Language Arts", credits:8, rows:[
+      {t:"English 9", sem:"S1"}, {t:"English 9", sem:"S2"},
+      {t:"English 10", sem:"S1"}, {t:"English 10", sem:"S2"},
+      {t:"American Literature", sem:"S1"}, {t:"American Literature", sem:"S2"},
+      {t:"British & World Literature", sem:"S1"}, {t:"British & World Literature", sem:"S2"},
+    ]},
+    { title:"Mathematics", credits:6, rows:[
+      {t:"Integrated Mathematics I", sem:"S1"}, {t:"Integrated Mathematics I", sem:"S2"},
+      {t:"Integrated Mathematics II", sem:"S1"}, {t:"Integrated Mathematics II", sem:"S2"},
+      {t:"Math elective", select:["Choose course…","Pre-Calculus","Statistics","Trigonometry","Financial Math","Other"]},
+      {t:"Math elective", select:["Choose course…","Pre-Calculus","Statistics","Trigonometry","Financial Math","Other"]},
+    ]},
+    { title:"Science", credits:6, rows:[
+      {t:"Earth or Physical Science", select:["Choose course…","Earth Science","Physical Science","Physics"]},
+      {t:"Earth or Physical Science", select:["Choose course…","Earth Science","Physical Science","Physics"]},
+      {t:"Biology", sem:"S1"}, {t:"Biology", sem:"S2"},
+      {t:"Lab science elective", select:["Choose course…","Chemistry","Physics","Anatomy & Physiology","Environmental Science","Other"]},
+      {t:"Lab science elective", select:["Choose course…","Chemistry","Physics","Anatomy & Physiology","Environmental Science","Other"]},
+    ]},
+    { title:"Social Studies", credits:5, rows:[
+      {t:"US History", sem:"S1"}, {t:"US History", sem:"S2"},
+      {t:"US Government & Politics", sem:"S1"}, {t:"US Government & Politics", sem:"S2"},
+      {t:"US and Global Economics"},
+    ]},
+  ];
+
+  const CORE_COL2 = [
+    { title:"Fine Arts / World Language", credits:2, rows:[
+      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II"]},
+      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II"]},
+    ]},
+    { title:"Health", credits:1, rows:[ {t:"Health Science II"} ]},
+    { title:"Communications", credits:1, rows:[ {t:"Speech"} ]},
+    { title:"Digital Literacy **", credits:1, rows:[ {t:"Business Computer Applications"} ]},
+    { title:"Electives", credits:16, rows: Array.from({length:16}, (_,i)=>({ t:"Elective "+(i+1), input:true })) },
+    { title:"Additional Requirements", credits:0, rows:[
+      {t:"Future Readiness Project or Senior Project", creditless:true},
+      {t:"Civics Test", creditless:true},
+    ]},
+  ];
+
+  // Pathways: year blocks (courses only — no course codes) + certifications.
+  // Required-course sequence and optional-elective lists both sourced from
+  // ITCA's official 26-27 pathway flyers.
+  // Shared CTE elective options offered across every ITCA pathway.
+  const CTE_COMMON = [
+    {t:"CS Microsoft Applications 1", sem:"S1"},
+    {t:"CS Microsoft Applications 2", sem:"S2"},
+    {t:"Career Preparation I"},
+    {t:"Entrepreneurship"},
+    {t:"Accounting 1", sem:"S1"},
+    {t:"Accounting 2", sem:"S2"},
+    {t:"Internship 1"},
+    {t:"Apprenticeship 1"},
+    {t:"Work Experience 1", sem:"S1/S2"},
+  ];
+  // CTSOs ITCA offers, used by the CTE Diploma / CTSO membership section below.
+  const CTSOS = ["HOSA", "FFA", "BPA"];
+  // To earn a CTE Diploma a student must: complete a pathway, pass the State
+  // TSA course, and pass the Workplace Readiness Exam.
+  const CTE_DIPLOMA_REQS = ["Complete a Pathway", "Pass the State TSA Course", "Pass the Workplace Readiness Exam"];
+  const PATHWAYS = {
+    "agriculture": {
+      label: "Agriculture: Leadership & Communications",
+      years: [
+        { title:"Year 1", credits:"2 Credits", rows:[
+          {t:"Interpersonal Communications", sem:"S1"},
+          {t:"Principles of Agriculture", sem:"S2"},
+        ]},
+        { title:"Year 2", credits:"2/4 Credits", rows:[
+          {t:"Principles of Plant Science", sem:"S1"},
+          {t:"Principles of Plant Science", sem:"S2"},
+          {t:"Principles of Livestock & Poultry Production", sem:"S1"},
+          {t:"Principles of Livestock & Poultry Production", sem:"S2"},
+        ]},
+        { title:"Year 3", credits:"2 Credits", rows:[
+          {t:"Experiential Learning and SAE Programs", sem:"S1"},
+          {t:"Principles of Agriculture Communications & Leadership", sem:"S2"},
+        ]},
+        { title:"Optional Electives", credits:"", rows:[
+          {t:"PBL Entrepreneurship I", sem:"S1"},
+          ...CTE_COMMON,
+        ]},
+      ],
+      certs: [
+        "OSHA 10-Hour Certification",
+        "BASF Plant Science Certification",
+        "Elanco Animal Science Certification",
+        "Artificial Insemination Certification",
+        "Intuit QuickBooks Certified User",
+      ],
+    },
+    "business": {
+      label: "Business Management",
+      years: [
+        { title:"Year 1", credits:"2 Credits", rows:[
+          {t:"PBL Marketing", sem:"S1"},
+          {t:"Financial Literacy", sem:"S2"},
+        ]},
+        { title:"Year 2", credits:"2 Credits", rows:[
+          {t:"Introduction to Management", sem:"S1"},
+          {t:"Entrepreneurship with Certification Prep", sem:"S2"},
+        ]},
+        { title:"Optional Electives", credits:"", rows:[
+          {t:"PBL Entrepreneurship I", sem:"S1"},
+          ...CTE_COMMON,
+        ]},
+      ],
+      certs: [
+        "Entrepreneurship and Small Business (ESB) Certification",
+        "Microsoft Office Specialist: Word",
+        "Microsoft Office Specialist: Excel",
+        "Microsoft Office Specialist: PowerPoint",
+        "Intuit QuickBooks Certified User",
+      ],
+    },
+    "digital": {
+      label: "Digital Communications",
+      years: [
+        { title:"Year 1", credits:"2 Credits", rows:[
+          {t:"PBL Digital Arts I", sem:"S1"},
+          {t:"Digital Media: Photoshop", sem:"S2"},
+        ]},
+        { title:"Year 2", credits:"2 Credits", rows:[
+          {t:"Digital Media: Illustrator", sem:"S1"},
+          {t:"Digital Media: InDesign", sem:"S2"},
+        ]},
+        { title:"Optional Electives", credits:"", rows:[
+          {t:"Web Design", sem:"S1"},
+          {t:"Introduction to Digital Media", sem:"S2"},
+          ...CTE_COMMON,
+        ]},
+      ],
+      certs: [
+        "Adobe Photoshop",
+        "Adobe Illustrator",
+        "Adobe InDesign",
+        "Microsoft Office Specialist: Word",
+        "Microsoft Office Specialist: Excel",
+        "Microsoft Office Specialist: PowerPoint",
+      ],
+    },
+    "medical": {
+      label: "Medical Assisting",
+      years: [
+        { title:"Year 1", credits:"2 Credits", rows:[
+          {t:"Health Science II (Dynamic)"},
+          {t:"Medical Terminology"},
+        ]},
+        { title:"Year 2", credits:"2/3 Credits", rows:[
+          {t:"Anatomy and Physiology", sem:"S1"},
+          {t:"Anatomy and Physiology", sem:"S2"},
+          {t:"Medical Office Procedures & Administration", sem:"S1"},
+        ]},
+        { title:"Year 3", credits:"3 Credits", rows:[
+          {t:"Clinical Medical Assisting", sem:"S1"},
+          {t:"Clinical Medical Assisting", sem:"S2"},
+          {t:"Electrocardiography", sem:"S2"},
+        ]},
+        { title:"Optional Electives", credits:"", rows:[
+          ...CTE_COMMON,
+        ]},
+      ],
+      certs: [
+        "NHA Certified Clinical Medical Assistant (CCMA)",
+        "NHA Certified Electrocardiography Technician (CET)",
+        "NHA Certified Medical Administrative Assistant (CMAA)",
+        "Microsoft Office Specialist: Word",
+        "Microsoft Office Specialist: Excel",
+        "Microsoft Office Specialist: PowerPoint",
+        "Intuit QuickBooks Certified User",
+      ],
+    },
+    "pharmacy": {
+      label: "Pharmacy Technician",
+      years: [
+        { title:"Year 1", credits:"2 Credits", rows:[
+          {t:"Health Science II (Dynamic)"},
+          {t:"Medical Terminology"},
+        ]},
+        { title:"Year 2", credits:"2/3 Credits", rows:[
+          {t:"Anatomy and Physiology", sem:"S1"},
+          {t:"Anatomy and Physiology", sem:"S2"},
+          {t:"Medical Office Procedures & Administration", sem:"S1"},
+        ]},
+        { title:"Year 3", credits:"3 Credits", rows:[
+          {t:"Pharmacy Technician", sem:"S1"},
+          {t:"Pharmacy Technician", sem:"S2"},
+        ]},
+        { title:"Optional Electives", credits:"", rows:[
+          ...CTE_COMMON,
+        ]},
+      ],
+      certs: [
+        "NHA Certified Pharmacy Technician (ExCPT)",
+        "Microsoft Office Specialist: Word",
+        "Microsoft Office Specialist: Excel",
+        "Microsoft Office Specialist: PowerPoint",
+        "Intuit QuickBooks Certified User",
+      ],
+    },
+  };
+
+  /* ---------------- Storage (in-memory only) ---------------- */
+  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"" };
+
+  /* ---------------- Render helpers ---------------- */
+  const checkSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function rowKey(prefix, groupTitle, idx){ return prefix+"::"+groupTitle+"::"+idx; }
+
+  function buildRow(key, item, store){
+    const row = document.createElement('div');
+    row.className = 'row' + (item.creditless ? ' task-row' : '');
+
+    if (item.select) {
+      row.classList.add('row-input');
+      const wrap = document.createElement('div');
+      wrap.className = 'chk-wrap';
+      const box = document.createElement('span'); box.className='chk'; box.innerHTML = checkSvg;
+      wrap.appendChild(box);
+      row.appendChild(wrap);
+      const text = document.createElement('div'); text.className = 'rowtext';
+      const sel = document.createElement('select'); sel.className = 'inline-select';
+      item.select.forEach(opt=>{ const o=document.createElement('option'); o.textContent=opt; sel.appendChild(o); });
+      sel.value = store[key] && store[key].val || item.select[0];
+      sel.addEventListener('change', ()=>{ store[key] = store[key]||{}; store[key].val = sel.value; });
+      text.appendChild(sel);
+      row.appendChild(text);
+      row.addEventListener('click', (e)=>{ if(e.target===sel) return; toggle(); });
+      const toggle = ()=>{
+        store[key] = store[key] || {};
+        store[key].done = !store[key].done;
+        row.classList.toggle('done', !!store[key].done);
+        updateTotals();
+      };
+      if (store[key] && store[key].done) row.classList.add('done');
+      return row;
+    }
+
+    if (item.input) {
+      row.classList.add('row-input');
+      const wrap = document.createElement('div');
+      wrap.className = 'chk-wrap';
+      const box = document.createElement('span'); box.className='chk'; box.innerHTML = checkSvg;
+      wrap.appendChild(box);
+      row.appendChild(wrap);
+      const text = document.createElement('div'); text.className = 'rowtext';
+      const inp = document.createElement('input'); inp.type='text'; inp.className='elective-input';
+      inp.placeholder = item.t; inp.value = (store[key]&&store[key].val) || '';
+      inp.addEventListener('input', ()=>{ store[key]=store[key]||{}; store[key].val = inp.value; });
+      text.appendChild(inp);
+      row.appendChild(text);
+      const toggle = ()=>{
+        store[key] = store[key] || {};
+        store[key].done = !store[key].done;
+        row.classList.toggle('done', !!store[key].done);
+        updateTotals();
+      };
+      row.addEventListener('click', (e)=>{ if(e.target===inp) return; toggle(); });
+      if (store[key] && store[key].done) row.classList.add('done');
+      return row;
+    }
+
+    // plain checkbox row
+    const wrap = document.createElement('div'); wrap.className='chk-wrap';
+    const box = document.createElement('span'); box.className='chk'; box.innerHTML = checkSvg;
+    wrap.appendChild(box);
+    row.appendChild(wrap);
+    const text = document.createElement('div'); text.className='rowtext';
+    text.innerHTML = item.t + (item.sem ? ' <span class="sem">('+item.sem+')</span>' : '');
+    row.appendChild(text);
+
+    const toggle = ()=>{
+      store[key] = !store[key];
+      row.classList.toggle('done', !!store[key]);
+      updateTotals();
+    };
+    row.addEventListener('click', toggle);
+    row.tabIndex = 0;
+    row.setAttribute('role','checkbox');
+    row.setAttribute('aria-checked', store[key] ? 'true':'false');
+    row.addEventListener('keydown', (e)=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); toggle(); row.setAttribute('aria-checked', store[key]?'true':'false'); } });
+
+    if (store[key]) row.classList.add('done');
+    return row;
+  }
+
+  function buildPanel(group, keyPrefix, store){
+    const panel = document.createElement('section'); panel.className='panel';
+    const head = document.createElement('div'); head.className='panel-head';
+    const h = document.createElement('h3'); h.textContent = group.title;
+    head.appendChild(h);
+    if (group.credits || group.credits===0){
+      const c = document.createElement('span'); c.className='credits';
+      c.textContent = group.credits ? group.credits+' cr' : 'no credit';
+      head.appendChild(c);
+    }
+    panel.appendChild(head);
+    const body = document.createElement('div'); body.className='panel-body';
+    group.rows.forEach((item, idx)=>{
+      const key = rowKey(keyPrefix, group.title, idx);
+      body.appendChild(buildRow(key, item, store));
+    });
+    panel.appendChild(body);
+    return panel;
+  }
+
+  function renderCore(){
+    const c1 = document.getElementById('col1'); c1.innerHTML='';
+    const c2 = document.getElementById('col2'); c2.innerHTML='';
+    CORE_COL1.forEach(g=> c1.appendChild(buildPanel(g,'core',state.core)));
+    CORE_COL2.forEach(g=> c2.appendChild(buildPanel(g,'core',state.core)));
+    updateTotals();
+  }
+
+  function renderPathway(){
+    const col3 = document.getElementById('col3'); col3.innerHTML='';
+    const key = state.pathwayKey;
+    const wrap = document.createElement('section'); wrap.className='pathway-panel';
+
+    if (!key){
+      const head = document.createElement('div'); head.className='pathway-head';
+      head.innerHTML = '<p class="eyebrow2">ITCA Pathway</p><h2>No pathway selected</h2>';
+      wrap.appendChild(head);
+      const empty = document.createElement('div'); empty.className='empty-pathway';
+      empty.textContent = 'Choose a CTE pathway above to load its year-by-year coursework and industry certifications here.';
+      wrap.appendChild(empty);
+      appendCteSection(wrap);
+      appendNotes(wrap);
+      col3.appendChild(wrap);
+      return;
+    }
+
+    const pw = PATHWAYS[key];
+    const head = document.createElement('div'); head.className='pathway-head';
+    head.innerHTML = '<p class="eyebrow2">ITCA Pathway</p><h2>'+pw.label+'</h2>';
+    wrap.appendChild(head);
+
+    const body = document.createElement('div'); body.className='pathway-body';
+    pw.years.forEach(yr=>{
+      const yt = document.createElement('div'); yt.className='year-title';
+      yt.innerHTML = '<span>'+yr.title+'</span>' + (yr.credits ? '<span class="credits">'+yr.credits+'</span>' : '');
+      body.appendChild(yt);
+      yr.rows.forEach((item, idx)=>{
+        const key2 = rowKey('pw:'+key, yr.title, idx);
+        body.appendChild(buildRow(key2, item, state.pathway));
+      });
+    });
+    wrap.appendChild(body);
+
+    const certWrap = document.createElement('div'); certWrap.className='cert-section';
+    const certHead = document.createElement('div'); certHead.className='cert-head'; certHead.textContent='Certifications';
+    certWrap.appendChild(certHead);
+    const certBody = document.createElement('div'); certBody.className='panel-body';
+    for (let i=0;i<pw.certs.length;i++){
+      const key3 = rowKey('cert:'+key, pw.certs[i], i);
+      certBody.appendChild(buildRow(key3, { t: pw.certs[i] }, state.pathway));
+    }
+    certWrap.appendChild(certBody);
+    wrap.appendChild(certWrap);
+
+    appendCteSection(wrap);
+    appendNotes(wrap);
+    col3.appendChild(wrap);
+  }
+
+  function appendCteSection(wrap){
+    const wrap2 = document.createElement('div'); wrap2.className='cert-section';
+    const head = document.createElement('div'); head.className='cert-head'; head.textContent='CTE Diploma & CTSO Membership';
+    wrap2.appendChild(head);
+    const body = document.createElement('div'); body.className='panel-body';
+    const sub1 = document.createElement('div'); sub1.className='sub-label'; sub1.textContent='CTE Diploma Requirements';
+    body.appendChild(sub1);
+    CTE_DIPLOMA_REQS.forEach((req, idx)=>{
+      body.appendChild(buildRow(rowKey('cte','diploma',idx), { t: req }, state.cte));
+    });
+    const sub2 = document.createElement('div'); sub2.className='sub-label'; sub2.textContent='CTSO Membership';
+    body.appendChild(sub2);
+    CTSOS.forEach((org, idx)=>{
+      body.appendChild(buildRow(rowKey('cte','ctso',idx), { t: org + " Member" }, state.cte));
+    });
+    wrap2.appendChild(body);
+    wrap.appendChild(wrap2);
+  }
+
+  function appendNotes(wrap){
+    const notesWrap = document.createElement('div'); notesWrap.className='notes-section';
+    const nh = document.createElement('div'); nh.className='notes-head'; nh.textContent='Notes / plans for future';
+    notesWrap.appendChild(nh);
+    const ta = document.createElement('textarea'); ta.className='notes-area';
+    ta.placeholder = 'Post-secondary plans, licensure notes, advisor comments…';
+    ta.value = state.notes;
+    ta.addEventListener('input', ()=>{ state.notes = ta.value; });
+    notesWrap.appendChild(ta);
+    wrap.appendChild(notesWrap);
+  }
+
+  function updateTotals(){
+    let earned = 0;
+    Object.keys(state.core).forEach(k=>{
+      const v = state.core[k];
+      if (k.includes('::Additional Requirements::')) return; // creditless
+      if (v === true) earned += 1;
+      else if (v && typeof v === 'object' && v.done) earned += 1;
+    });
+    document.getElementById('coreTotal').textContent = earned;
+    const pct = Math.min(100, Math.round(earned/46*100));
+    document.getElementById('coreBar').style.width = pct+'%';
+  }
+
+  /* ---------------- Pathway selector ---------------- */
+  function buildSelect(){
+    const sel = document.getElementById('pathwaySelect');
+    const optNone = document.createElement('option'); optNone.value=''; optNone.textContent='Select a pathway…';
+    sel.appendChild(optNone);
+    Object.keys(PATHWAYS).forEach(k=>{
+      const o = document.createElement('option'); o.value=k; o.textContent=PATHWAYS[k].label;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', ()=>{
+      state.pathwayKey = sel.value;
+      state.pathway = {}; // switching pathways clears pathway-specific checks
+      renderPathway();
+    });
+  }
+
+  /* ---------------- Top-level wiring ---------------- */
+  document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
+    state.core = {}; state.pathway = {}; state.cte = {}; state.notes='';
+    document.getElementById('studentName').value='';
+    document.getElementById('gradDate').value='';
+    renderCore();
+    renderPathway();
+  });
+
+  buildSelect();
+  renderCore();
+  renderPathway();
+
+})();
+</script>
