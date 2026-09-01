@@ -131,6 +131,75 @@
   .btn-primary{ background:#fff; color:var(--navy-deep); border-color:#fff; }
   .btn-primary:hover{ background:#eef3fb; }
 
+  /* ---------- Shared cloud database bar ---------- */
+  .cloudbar{
+    margin-top:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow: var(--shadow);
+    padding:13px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .cloudbar .cloud-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--ink-soft); font-weight:700; white-space:nowrap;
+  }
+  .cloudbar .cloud-sub{ font-size:12.5px; color:var(--ink-soft); flex:1 1 auto; min-width:180px; }
+  .cloud-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .cloud-btn{
+    appearance:none; border:1.5px solid var(--navy); background:var(--navy); color:#fff;
+    padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+  }
+  .cloud-btn:hover{ background:var(--navy-deep); }
+  .cloud-btn.secondary{ background:transparent; color:var(--navy); }
+  .cloud-btn.secondary:hover{ background:var(--card-2); }
+  .cloud-status{
+    font-size:11.5px; font-weight:700; padding:5px 11px; border-radius:999px;
+    cursor:pointer; border:none; letter-spacing:.02em;
+  }
+  .cloud-status.locked{ background:var(--brick-wash); color:var(--brick-deep); }
+  .cloud-status.unlocked{ background:var(--green-wash); color:var(--green); }
+
+  /* ---------- Cloud picker modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,20,30,.55);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:60px 20px; z-index:1000;
+  }
+  .modal-card{
+    background:var(--card); border-radius:14px; box-shadow: var(--shadow);
+    width:100%; max-width:560px; max-height:78vh; overflow:hidden;
+    display:flex; flex-direction:column; border:1px solid var(--line);
+  }
+  .modal-head{
+    padding:15px 20px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .modal-head h2{ font-size:15px; margin:0; color:var(--navy); }
+  .modal-close{
+    appearance:none; border:none; background:none; font-size:22px; line-height:1;
+    cursor:pointer; color:var(--ink-soft); padding:2px 6px; border-radius:6px;
+  }
+  .modal-close:hover{ background:var(--card-2); }
+  .modal-search{ padding:12px 20px; border-bottom:1px solid var(--line-soft); }
+  .modal-search input{
+    width:100%; border:1px solid var(--line); border-radius:8px;
+    padding:8px 11px; font-size:14px; color:var(--ink); background:var(--paper);
+  }
+  .modal-list{ overflow-y:auto; padding:8px; }
+  .modal-row{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:8px; cursor:pointer;
+  }
+  .modal-row:hover{ background:var(--card-2); }
+  .modal-row .mrow-name{ font-weight:600; color:var(--ink); font-size:13.5px; }
+  .modal-row .mrow-meta{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; }
+  .modal-empty{ padding:34px 20px; text-align:center; color:var(--ink-soft); font-size:13.5px; }
+
   /* ---------- Identity bar (name / date / pathway / total) ---------- */
   .idbar{
     margin-top:14px;
@@ -341,6 +410,16 @@
     </div>
   </header>
 
+  <section class="cloudbar no-print" id="cloudBar">
+    <div class="cloud-label">Shared database</div>
+    <div class="cloud-sub">Save or reopen any student's plan from any computer &mdash; every advisor shares this.</div>
+    <div class="cloud-actions">
+      <button class="cloud-status locked" id="cloudStatus" type="button" title="Click to change or clear the saved passcode on this device">Locked</button>
+      <button class="cloud-btn secondary" id="cloudLoadBtn" type="button">Load from Database</button>
+      <button class="cloud-btn" id="cloudSaveBtn" type="button">Save to Database</button>
+    </div>
+  </section>
+
   <section class="idbar">
     <div class="field">
       <label for="studentName">Student name</label>
@@ -376,6 +455,7 @@
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.52.1/dist/umd/supabase.js"></script>
 <script>
 (function(){
 
@@ -961,6 +1041,7 @@
     state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.healthLinks = {}; state.commLinks = {}; state.notes='';
     document.getElementById('studentName').value='';
     document.getElementById('gradDate').value='';
+    cloudId = null;
     renderCore();
     renderPathway();
   });
@@ -1030,11 +1111,206 @@
       document.getElementById('studentName').value = payload.studentName || '';
       document.getElementById('gradDate').value = payload.gradDate || '';
       document.getElementById('pathwaySelect').value = state.pathwayKey || '';
+      cloudId = null; // a file load isn't tied to a shared-database record until explicitly saved there
       renderPathway();
       renderCore();
     };
     reader.readAsText(file);
   });
+
+  /* ---------------- Shared online database (Supabase) ----------------
+     A second, independent way to save/reopen a student's plan: instead of a
+     file on one computer, "Save to Database" / "Load from Database" read and
+     write a shared table that every advisor's browser can reach. Gated by one
+     shared staff passcode (checked server-side, not just in this page) rather
+     than individual logins. */
+  const SUPABASE_URL = 'https://eiyzgnibxwasnhnwfdbm.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpeXpnbmlieHdhc25obndmZGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyODI3MTUsImV4cCI6MjEwMzg1ODcxNX0.dw7hHeO9iqlojBg5_fMVY7S7dYqa-Yrnn5K6m2yUtRQ';
+  const sbClient = (window.supabase && window.supabase.createClient)
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+  const PASSCODE_STORAGE_KEY = 'itcaStaffPasscode';
+  let cloudId = null; // id of the shared-database row currently loaded/saved, if any
+
+  function getStoredPasscode(){
+    try { return localStorage.getItem(PASSCODE_STORAGE_KEY) || ''; } catch { return ''; }
+  }
+  function storePasscode(pc){
+    try { localStorage.setItem(PASSCODE_STORAGE_KEY, pc); } catch {}
+  }
+  function forgetPasscode(){
+    try { localStorage.removeItem(PASSCODE_STORAGE_KEY); } catch {}
+    updateCloudStatus();
+  }
+  function updateCloudStatus(){
+    const el = document.getElementById('cloudStatus');
+    if (!el) return;
+    const has = !!getStoredPasscode();
+    el.textContent = has ? 'Unlocked' : 'Locked';
+    el.classList.toggle('unlocked', has);
+    el.classList.toggle('locked', !has);
+  }
+
+  function ensurePasscode(){
+    let pc = getStoredPasscode();
+    if (pc) return pc;
+    pc = window.prompt("Enter the shared staff passcode to use the online student database:");
+    if (!pc) return null;
+    storePasscode(pc);
+    updateCloudStatus();
+    return pc;
+  }
+
+  async function cloudCall(fnName, args, allowRetry){
+    if (allowRetry === undefined) allowRetry = true;
+    if (!sbClient){
+      return { error: { message: 'The shared database library did not load. Check your internet connection and reload the page.' } };
+    }
+    const passcode = ensurePasscode();
+    if (!passcode) return { error: { message: 'CANCELLED' } };
+    const { data, error } = await sbClient.rpc(fnName, Object.assign({ p_passcode: passcode }, args));
+    if (error && /passcode/i.test(error.message || '') && allowRetry){
+      forgetPasscode();
+      alert('That passcode was not accepted. Please try again.');
+      return cloudCall(fnName, args, false);
+    }
+    return { data, error };
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  async function cloudSave(){
+    const studentName = document.getElementById('studentName').value;
+    const gradDate = document.getElementById('gradDate').value;
+    if (!studentName.trim()){
+      alert("Enter the student's name before saving to the shared database.");
+      return;
+    }
+    const payloadState = {
+      core: state.core, pathway: state.pathway, cte: state.cte,
+      notes: state.notes, pathwayKey: state.pathwayKey,
+      electiveAssignments: state.electiveAssignments, healthLinks: state.healthLinks, commLinks: state.commLinks,
+    };
+    const { data, error } = await cloudCall('save_student_plan', {
+      p_id: cloudId,
+      p_student_name: studentName,
+      p_grad_date: gradDate,
+      p_pathway_key: state.pathwayKey || '',
+      p_state: payloadState,
+    });
+    if (error){
+      if (error.message !== 'CANCELLED') alert('Could not save to the shared database: ' + error.message);
+      return;
+    }
+    cloudId = data;
+    alert('Saved "' + studentName + '" to the shared database.');
+  }
+
+  async function openCloudPicker(){
+    const { data, error } = await cloudCall('list_student_plans', {});
+    if (error){
+      if (error.message !== 'CANCELLED') alert('Could not reach the shared database: ' + error.message);
+      return;
+    }
+    showCloudPickerModal(data || []);
+  }
+
+  function showCloudPickerModal(rows){
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML =
+      '<div class="modal-card">' +
+        '<div class="modal-head"><h2>Load from shared database</h2>' +
+          '<button class="modal-close" type="button" aria-label="Close">&times;</button></div>' +
+        '<div class="modal-search"><input type="text" placeholder="Search by student name…" id="cloudSearchInput" autocomplete="off"></div>' +
+        '<div class="modal-list" id="cloudModalList"></div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    const closeModal = function(){ overlay.remove(); };
+    overlay.addEventListener('click', function(e){ if (e.target === overlay) closeModal(); });
+    overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+    document.addEventListener('keydown', function escHandler(e){
+      if (e.key === 'Escape'){ closeModal(); document.removeEventListener('keydown', escHandler); }
+    });
+
+    const listEl = overlay.querySelector('#cloudModalList');
+    const searchEl = overlay.querySelector('#cloudSearchInput');
+
+    function render(filter){
+      const f = (filter || '').toLowerCase();
+      const filtered = rows.filter(function(r){ return (r.student_name || '').toLowerCase().indexOf(f) !== -1; });
+      listEl.innerHTML = '';
+      if (!filtered.length){
+        listEl.innerHTML = '<div class="modal-empty">No matching students yet. Use "Save to Database" from that student\'s plan to add one.</div>';
+        return;
+      }
+      filtered.forEach(function(r){
+        const row = document.createElement('div');
+        row.className = 'modal-row';
+        const pw = PATHWAYS[r.pathway_key];
+        const pwLabel = pw ? pw.label : (r.pathway_key || 'No pathway selected');
+        const updated = r.updated_at ? new Date(r.updated_at).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) : '';
+        row.innerHTML =
+          '<div><div class="mrow-name">' + escapeHtml(r.student_name || '(unnamed)') + '</div>' +
+          '<div class="mrow-meta">' + escapeHtml(pwLabel) + (r.grad_date ? ' &middot; ' + escapeHtml(r.grad_date) : '') + '</div></div>' +
+          '<div class="mrow-meta">Updated ' + escapeHtml(updated) + '</div>';
+        row.addEventListener('click', async function(){
+          closeModal();
+          await cloudLoadOne(r.id);
+        });
+        listEl.appendChild(row);
+      });
+    }
+    render('');
+    searchEl.addEventListener('input', function(){ render(searchEl.value); });
+    searchEl.focus();
+  }
+
+  async function cloudLoadOne(id){
+    const { data, error } = await cloudCall('load_student_plan', { p_id: id });
+    if (error){
+      if (error.message !== 'CANCELLED') alert('Could not load that student: ' + error.message);
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row){
+      alert('That record could not be found -- it may have been deleted by another advisor.');
+      return;
+    }
+    const s = row.state || {};
+    state.core = s.core || {};
+    state.pathway = s.pathway || {};
+    state.cte = s.cte || {};
+    state.notes = s.notes || '';
+    state.pathwayKey = s.pathwayKey || row.pathway_key || '';
+    state.electiveAssignments = s.electiveAssignments || {};
+    state.healthLinks = s.healthLinks || {};
+    state.commLinks = s.commLinks || {};
+    document.getElementById('studentName').value = row.student_name || '';
+    document.getElementById('gradDate').value = row.grad_date || '';
+    document.getElementById('pathwaySelect').value = state.pathwayKey || '';
+    cloudId = row.id;
+    renderPathway();
+    renderCore();
+  }
+
+  document.getElementById('cloudSaveBtn').addEventListener('click', cloudSave);
+  document.getElementById('cloudLoadBtn').addEventListener('click', openCloudPicker);
+  document.getElementById('cloudStatus').addEventListener('click', function(){
+    if (!getStoredPasscode()){
+      ensurePasscode();
+      return;
+    }
+    if (confirm('Forget the saved passcode on this device? You will be asked for it again next time.')){
+      forgetPasscode();
+    }
+  });
+  updateCloudStatus();
 
   buildSelect();
   renderCore();
