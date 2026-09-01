@@ -200,6 +200,29 @@
   .modal-row .mrow-meta{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; }
   .modal-empty{ padding:34px 20px; text-align:center; color:var(--ink-soft); font-size:13.5px; }
 
+  /* ---------- Toasts & confirm dialog (replace native alert/confirm, which
+     freeze automated/kiosk browsers and look out of place) ---------- */
+  .toast-stack{
+    position:fixed; left:50%; top:22px; transform:translateX(-50%);
+    z-index:1200; display:flex; flex-direction:column; gap:8px; align-items:center;
+    pointer-events:none;
+  }
+  .toast{
+    pointer-events:auto;
+    background:var(--navy); color:#fff; font-size:13.5px; font-weight:600;
+    padding:11px 18px; border-radius:9px; box-shadow: var(--shadow);
+    max-width:420px; text-align:center; opacity:0; transform:translateY(-8px);
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .toast.error{ background:var(--brick-deep); }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .confirm-card{ max-width:400px; }
+  .confirm-card .confirm-body{ padding:16px 20px 4px; font-size:13.5px; color:var(--ink); }
+  .confirm-card .confirm-actions{
+    padding:16px 20px 20px; display:flex; gap:10px; justify-content:flex-end;
+  }
+  .confirm-card .cloud-btn.secondary{ border-color:var(--line); color:var(--ink-soft); }
+
   /* ---------- Identity bar (name / date / pathway / total) ---------- */
   .idbar{
     margin-top:14px;
@@ -393,6 +416,8 @@
 
 <div id="printScaleOuter">
 <div class="wrap">
+
+  <div class="toast-stack no-print" id="toastStack"></div>
 
   <header class="masthead">
     <div class="badge" aria-hidden="true">ITCA</div>
@@ -671,6 +696,56 @@
 
   /* ---------------- Storage (in-memory only) ---------------- */
   const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {}, healthLinks: {}, commLinks: {} };
+
+  /* ---------------- Toasts & confirm dialog ----------------
+     Replace window.alert()/confirm(): those native dialogs pause the whole
+     page (and can hang some kiosk/automated browsers), and they look out of
+     place next to this tool's own styled UI. */
+  function showToast(message, opts){
+    const isError = opts && opts.error;
+    const stack = document.getElementById('toastStack');
+    if (!stack){ if (isError) console.error(message); return; }
+    const el = document.createElement('div');
+    el.className = 'toast' + (isError ? ' error' : '');
+    el.textContent = message;
+    stack.appendChild(el);
+    requestAnimationFrame(()=>{ el.classList.add('show'); });
+    setTimeout(()=>{
+      el.classList.remove('show');
+      setTimeout(()=>{ el.remove(); }, 220);
+    }, isError ? 5200 : 3400);
+  }
+
+  function showConfirm(message, opts){
+    const okLabel = (opts && opts.okLabel) || 'OK';
+    return new Promise(function(resolve){
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML =
+        '<div class="modal-card confirm-card">' +
+          '<div class="confirm-body">' + escapeHtml(message) + '</div>' +
+          '<div class="confirm-actions">' +
+            '<button class="cloud-btn secondary" id="confirmCancel" type="button">Cancel</button>' +
+            '<button class="cloud-btn" id="confirmOk" type="button">' + escapeHtml(okLabel) + '</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      const finish = function(val){ overlay.remove(); resolve(val); };
+      overlay.querySelector('#confirmCancel').addEventListener('click', function(){ finish(false); });
+      overlay.querySelector('#confirmOk').addEventListener('click', function(){ finish(true); });
+      overlay.addEventListener('click', function(e){ if (e.target === overlay) finish(false); });
+      document.addEventListener('keydown', function esc(e){
+        if (e.key === 'Escape'){ document.removeEventListener('keydown', esc); finish(false); }
+      });
+      overlay.querySelector('#confirmOk').focus();
+    });
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
 
   /* ---------------- Render helpers ---------------- */
   const checkSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1036,8 +1111,8 @@
     // Safety net for browsers that don't fire afterprint reliably.
     setTimeout(revertPrintScale, 1000);
   });
-  document.getElementById('resetBtn').addEventListener('click', ()=>{
-    if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
+  document.getElementById('resetBtn').addEventListener('click', async ()=>{
+    if(!(await showConfirm('Clear every checkbox, elective and note on this plan?', {okLabel:'Clear it'}))) return;
     state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.healthLinks = {}; state.commLinks = {}; state.notes='';
     document.getElementById('studentName').value='';
     document.getElementById('gradDate').value='';
@@ -1094,9 +1169,9 @@
     reader.onload = () => {
       let payload;
       try { payload = JSON.parse(reader.result); }
-      catch { alert('That file isn\'t a valid ITCA Graduation Plan save file.'); return; }
+      catch { showToast('That file isn\'t a valid ITCA Graduation Plan save file.', {error:true}); return; }
       if (!payload || typeof payload !== 'object' || !payload.itcaGradPlanSave || !payload.state){
-        alert('That file isn\'t a valid ITCA Graduation Plan save file.');
+        showToast('That file isn\'t a valid ITCA Graduation Plan save file.', {error:true});
         return;
       }
       const s = payload.state;
@@ -1205,23 +1280,17 @@
     const { data, error } = await sbClient.rpc(fnName, Object.assign({ p_passcode: passcode }, args));
     if (error && /passcode/i.test(error.message || '') && allowRetry){
       forgetPasscode();
-      alert('That passcode was not accepted. Please try again.');
+      showToast('That passcode was not accepted. Please try again.', {error:true});
       return cloudCall(fnName, args, false);
     }
     return { data, error };
-  }
-
-  function escapeHtml(str){
-    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
-      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
-    });
   }
 
   async function cloudSave(){
     const studentName = document.getElementById('studentName').value;
     const gradDate = document.getElementById('gradDate').value;
     if (!studentName.trim()){
-      alert("Enter the student's name before saving to the shared database.");
+      showToast("Enter the student's name before saving to the shared database.", {error:true});
       return;
     }
     const payloadState = {
@@ -1237,17 +1306,17 @@
       p_state: payloadState,
     });
     if (error){
-      if (error.message !== 'CANCELLED') alert('Could not save to the shared database: ' + error.message);
+      if (error.message !== 'CANCELLED') showToast('Could not save to the shared database: ' + error.message, {error:true});
       return;
     }
     cloudId = data;
-    alert('Saved "' + studentName + '" to the shared database.');
+    showToast('Saved "' + studentName + '" to the shared database.');
   }
 
   async function openCloudPicker(){
     const { data, error } = await cloudCall('list_student_plans', {});
     if (error){
-      if (error.message !== 'CANCELLED') alert('Could not reach the shared database: ' + error.message);
+      if (error.message !== 'CANCELLED') showToast('Could not reach the shared database: ' + error.message, {error:true});
       return;
     }
     showCloudPickerModal(data || []);
@@ -1308,12 +1377,12 @@
   async function cloudLoadOne(id){
     const { data, error } = await cloudCall('load_student_plan', { p_id: id });
     if (error){
-      if (error.message !== 'CANCELLED') alert('Could not load that student: ' + error.message);
+      if (error.message !== 'CANCELLED') showToast('Could not load that student: ' + error.message, {error:true});
       return;
     }
     const row = Array.isArray(data) ? data[0] : data;
     if (!row){
-      alert('That record could not be found -- it may have been deleted by another advisor.');
+      showToast('That record could not be found -- it may have been deleted by another advisor.', {error:true});
       return;
     }
     const s = row.state || {};
@@ -1335,12 +1404,12 @@
 
   document.getElementById('cloudSaveBtn').addEventListener('click', cloudSave);
   document.getElementById('cloudLoadBtn').addEventListener('click', openCloudPicker);
-  document.getElementById('cloudStatus').addEventListener('click', function(){
+  document.getElementById('cloudStatus').addEventListener('click', async function(){
     if (!getStoredPasscode()){
       ensurePasscode();
       return;
     }
-    if (confirm('Forget the saved passcode on this device? You will be asked for it again next time.')){
+    if (await showConfirm('Forget the saved passcode on this device? You will be asked for it again next time.', {okLabel:'Forget it'})){
       forgetPasscode();
     }
   });
