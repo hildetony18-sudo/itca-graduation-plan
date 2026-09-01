@@ -378,6 +378,8 @@
 
   /* ---------------- Data ---------------- */
 
+  const SCIENCE_OPTIONS = ["Choose course…","Earth Science","Physical Science","Physics","Biology","Lab Science","Chemistry","Anatomy & Physiology","Environmental Science","Forensics","Biotechnology","Other"];
+
   // Core, non-pathway requirements. Every checkbox = 1 credit unless creditless:true.
   const CORE_COL1 = [
     { title:"English Language Arts", credits:8, rows:[
@@ -393,11 +395,12 @@
       {t:"Math elective", select:["Choose course…","Pre-Calculus","Statistics","Trigonometry","Financial Math","Other"]},
     ]},
     { title:"Science", credits:6, rows:[
-      {t:"Earth or Physical Science", select:["Choose course…","Earth Science","Physical Science","Physics"]},
-      {t:"Earth or Physical Science", select:["Choose course…","Earth Science","Physical Science","Physics"]},
-      {t:"Biology", sem:"S1"}, {t:"Biology", sem:"S2"},
-      {t:"Lab science elective", select:["Choose course…","Chemistry","Physics","Anatomy & Physiology","Environmental Science","Other"]},
-      {t:"Lab science elective", select:["Choose course…","Chemistry","Physics","Anatomy & Physiology","Environmental Science","Other"]},
+      {t:"Science course", select:SCIENCE_OPTIONS},
+      {t:"Science course", select:SCIENCE_OPTIONS},
+      {t:"Science course", select:SCIENCE_OPTIONS},
+      {t:"Science course", select:SCIENCE_OPTIONS},
+      {t:"Science course", select:SCIENCE_OPTIONS},
+      {t:"Science course", select:SCIENCE_OPTIONS},
     ]},
     { title:"Social Studies", credits:5, rows:[
       {t:"US History", sem:"S1"}, {t:"US History", sem:"S2"},
@@ -408,12 +411,12 @@
 
   const CORE_COL2 = [
     { title:"Fine Arts / World Language", credits:2, rows:[
-      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II"]},
-      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II"]},
+      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II","World History","Digital Arts"]},
+      {t:"Fine arts or world language", select:["Choose course…","Art","Music","Theatre","Dance","World Language I","World Language II","World History","Digital Arts"]},
     ]},
     { title:"Health", credits:1, rows:[ {t:"Health Science II"} ]},
     { title:"Communications", credits:1, rows:[ {t:"Speech"} ]},
-    { title:"Digital Literacy **", credits:1, rows:[ {t:"Business Computer Applications"} ]},
+    { title:"Digital Literacy **", credits:1, rows:[ {t:"Business Computer Applications/Digital Literacy"} ]},
     { title:"Electives", credits:16, rows: Array.from({length:16}, (_,i)=>({ t:"Elective "+(i+1), input:true })) },
     { title:"Additional Requirements", credits:0, rows:[
       {t:"Future Readiness Project or Senior Project", creditless:true},
@@ -584,7 +587,7 @@
   };
 
   /* ---------------- Storage (in-memory only) ---------------- */
-  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {} };
+  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {}, healthLinks: {} };
 
   /* ---------------- Render helpers ---------------- */
   const checkSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -626,6 +629,25 @@
       delete state.core[electiveKeyForIndex(state.electiveAssignments[pwKey])];
     });
     state.electiveAssignments = {};
+    state.healthLinks = {};
+    state.core[HEALTH_KEY] = false;
+  }
+
+  /* Health Science II is a named core requirement, not a generic elective --
+     checking it (or its pathway equivalent, e.g. "Health Science II (Dynamic)")
+     in the pathway column checks off the core Health Science II row directly
+     instead of consuming an Elective slot. */
+  const HEALTH_KEY = rowKey('core', 'Health', 0);
+  function isHealthScienceCourse(courseText){
+    return typeof courseText === 'string' && courseText.indexOf('Health Science II') === 0;
+  }
+  function assignHealthFromPathway(pwKey){
+    state.healthLinks[pwKey] = true;
+    state.core[HEALTH_KEY] = true;
+  }
+  function unassignHealthFromPathway(pwKey){
+    delete state.healthLinks[pwKey];
+    state.core[HEALTH_KEY] = Object.keys(state.healthLinks).length > 0;
   }
 
   function buildRow(key, item, store){
@@ -695,9 +717,15 @@
       row.classList.toggle('done', !!store[key]);
       if (key.indexOf('pw:') === 0){
         // A pathway (Year N) or Optional Elective course was checked/unchecked:
-        // sync it into the core Electives group and re-render that column.
-        if (store[key]) assignElectiveFromPathway(key, item.t);
-        else unassignElectiveFromPathway(key);
+        // Health Science II checks off the core Health Science II row directly;
+        // everything else syncs into the core Electives group. Re-render that column either way.
+        if (isHealthScienceCourse(item.t)){
+          if (store[key]) assignHealthFromPathway(key);
+          else unassignHealthFromPathway(key);
+        } else {
+          if (store[key]) assignElectiveFromPathway(key, item.t);
+          else unassignElectiveFromPathway(key);
+        }
         renderCore();
       } else {
         updateTotals();
@@ -905,7 +933,7 @@
   });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
     if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
-    state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.notes='';
+    state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.healthLinks = {}; state.notes='';
     document.getElementById('studentName').value='';
     document.getElementById('gradDate').value='';
     renderCore();
