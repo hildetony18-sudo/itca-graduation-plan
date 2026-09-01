@@ -590,7 +590,7 @@
   };
 
   /* ---------------- Storage (in-memory only) ---------------- */
-  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {}, healthLinks: {} };
+  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {}, healthLinks: {}, commLinks: {} };
 
   /* ---------------- Render helpers ---------------- */
   const checkSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -634,6 +634,8 @@
     state.electiveAssignments = {};
     state.healthLinks = {};
     state.core[HEALTH_KEY] = false;
+    state.commLinks = {};
+    state.core[COMM_KEY] = false;
   }
 
   /* Health Science II is a named core requirement, not a generic elective --
@@ -651,6 +653,22 @@
   function unassignHealthFromPathway(pwKey){
     delete state.healthLinks[pwKey];
     state.core[HEALTH_KEY] = Object.keys(state.healthLinks).length > 0;
+  }
+
+  /* Interpersonal Communications (Agriculture pathway, Year 1) is likewise a
+     named match for the core Communications/Speech requirement -- checking it
+     checks off the core Speech row directly instead of consuming an Elective slot. */
+  const COMM_KEY = rowKey('core', 'Communications', 0);
+  function isInterpersonalCommunicationsCourse(courseText){
+    return typeof courseText === 'string' && courseText.indexOf('Interpersonal Communications') === 0;
+  }
+  function assignCommFromPathway(pwKey){
+    state.commLinks[pwKey] = true;
+    state.core[COMM_KEY] = true;
+  }
+  function unassignCommFromPathway(pwKey){
+    delete state.commLinks[pwKey];
+    state.core[COMM_KEY] = Object.keys(state.commLinks).length > 0;
   }
 
   function buildRow(key, item, store){
@@ -721,10 +739,14 @@
       if (key.indexOf('pw:') === 0){
         // A pathway (Year N) or Optional Elective course was checked/unchecked:
         // Health Science II checks off the core Health Science II row directly;
+        // Interpersonal Communications checks off the core Speech row directly;
         // everything else syncs into the core Electives group. Re-render that column either way.
         if (isHealthScienceCourse(item.t)){
           if (store[key]) assignHealthFromPathway(key);
           else unassignHealthFromPathway(key);
+        } else if (isInterpersonalCommunicationsCourse(item.t)){
+          if (store[key]) assignCommFromPathway(key);
+          else unassignCommFromPathway(key);
         } else {
           if (store[key]) assignElectiveFromPathway(key, item.t);
           else unassignElectiveFromPathway(key);
@@ -936,7 +958,7 @@
   });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
     if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
-    state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.healthLinks = {}; state.notes='';
+    state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.healthLinks = {}; state.commLinks = {}; state.notes='';
     document.getElementById('studentName').value='';
     document.getElementById('gradDate').value='';
     renderCore();
@@ -965,7 +987,7 @@
       state: {
         core: state.core, pathway: state.pathway, cte: state.cte,
         notes: state.notes, pathwayKey: state.pathwayKey,
-        electiveAssignments: state.electiveAssignments, healthLinks: state.healthLinks,
+        electiveAssignments: state.electiveAssignments, healthLinks: state.healthLinks, commLinks: state.commLinks,
       },
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -1004,6 +1026,7 @@
       state.pathwayKey = s.pathwayKey || '';
       state.electiveAssignments = s.electiveAssignments || {};
       state.healthLinks = s.healthLinks || {};
+      state.commLinks = s.commLinks || {};
       document.getElementById('studentName').value = payload.studentName || '';
       document.getElementById('gradDate').value = payload.gradDate || '';
       document.getElementById('pathwaySelect').value = state.pathwayKey || '';
