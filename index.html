@@ -309,18 +309,21 @@
   }
 
   /* ---------- Print ---------- */
+  @page{ size: landscape; margin: 0.2in; }
   @media print{
-    body{ background:#fff; }
+    html, body{ background:#fff; height:auto !important; }
     .no-print{ display:none !important; }
-    .wrap{ padding:6px; max-width:100%; }
+    .wrap{ padding:6px; max-width:none; width:1360px; }
     .board{ grid-template-columns: 1fr 1fr 1fr; gap:8px; }
     .panel, .pathway-panel, .idbar, .masthead{ box-shadow:none; break-inside:avoid; }
     .masthead{ background:#1f3a68 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .panel-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .pathway-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #printScaleOuter{ overflow:hidden; }
   }
 </style>
 
+<div id="printScaleOuter">
 <div class="wrap">
 
   <header class="masthead">
@@ -368,6 +371,7 @@
   <p class="footnote">
     Core credit structure follows Idaho graduation rule IDAPA 08.02.03.105 (English 8 &middot; Communications/Speech 1 &middot; Math 6 &middot; Science 6 &middot; Social Studies 5 &middot; Humanities/Fine Arts 2 &middot; Health 1 &middot; Digital Literacy 1 &middot; electives 16) for a <b>46-credit total</b>, matching the plan ITCA uses for the Class of 2027. Digital Literacy is marked <b>**</b> because the state rule applies it to students graduating after January&nbsp;1, 2028 &mdash; ITCA includes it now as a local requirement. Selecting a pathway on the right fills in that pathway's year-by-year coursework and industry certifications automatically; switching pathways clears pathway-specific checks but never touches your core progress or elective notes.
   </p>
+</div>
 </div>
 
 <script>
@@ -805,7 +809,52 @@
   }
 
   /* ---------------- Top-level wiring ---------------- */
-  document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+  /* ---------------- Fit-to-one-page printing ---------------- */
+  // Landscape US Letter minus the @page margin, in CSS px at 96dpi:
+  // (11in - 0.4in) * 96 = 1017.6 ; (8.5in - 0.4in) * 96 = 777.6
+  const PRINT_PAGE_W = 1017;
+  const PRINT_PAGE_H = 777;
+
+  function applyPrintScale(){
+    const wrap = document.querySelector('.wrap');
+    const outer = document.getElementById('printScaleOuter');
+    wrap.style.transform = 'none';
+    // Set these inline (not just in the @media print stylesheet) so the
+    // measurement below matches actual print-time layout regardless of
+    // which CSS media state is active while we measure.
+    wrap.style.maxWidth = 'none';
+    wrap.style.width = '1360px';
+    wrap.style.padding = '6px';
+    const fullW = wrap.scrollWidth;
+    const fullH = wrap.scrollHeight;
+    const scale = Math.min(PRINT_PAGE_W / fullW, PRINT_PAGE_H / fullH, 1);
+    wrap.style.transformOrigin = 'top left';
+    wrap.style.transform = 'scale(' + scale + ')';
+    outer.style.width = (fullW * scale) + 'px';
+    outer.style.height = (fullH * scale) + 'px';
+  }
+
+  function revertPrintScale(){
+    const wrap = document.querySelector('.wrap');
+    const outer = document.getElementById('printScaleOuter');
+    wrap.style.transform = '';
+    wrap.style.width = '';
+    wrap.style.maxWidth = '';
+    wrap.style.padding = '';
+    wrap.style.transformOrigin = '';
+    outer.style.width = '';
+    outer.style.height = '';
+  }
+
+  window.addEventListener('beforeprint', applyPrintScale);
+  window.addEventListener('afterprint', revertPrintScale);
+
+  document.getElementById('printBtn').addEventListener('click', ()=>{
+    applyPrintScale();
+    window.print();
+    // Safety net for browsers that don't fire afterprint reliably.
+    setTimeout(revertPrintScale, 1000);
+  });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
     if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
     state.core = {}; state.pathway = {}; state.cte = {}; state.notes='';
