@@ -309,16 +309,15 @@
   }
 
   /* ---------- Print ---------- */
-  @page{ size: landscape; margin: 0.2in; }
+  @page{ size: portrait; margin: 0.2in; }
   @media print{
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
     html, body{ background:#fff; height:auto !important; }
     .no-print{ display:none !important; }
     .wrap{ padding:6px; max-width:none; width:1360px; }
     .board{ grid-template-columns: 1fr 1fr 1fr; gap:8px; }
     .panel, .pathway-panel, .idbar, .masthead{ box-shadow:none; break-inside:avoid; }
-    .masthead{ background:#1f3a68 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .panel-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .pathway-head{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .masthead{ background:#1f3a68 !important; }
     #printScaleOuter{ overflow:hidden; }
   }
 </style>
@@ -585,12 +584,49 @@
   };
 
   /* ---------------- Storage (in-memory only) ---------------- */
-  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"" };
+  const state = { core: {}, pathway: {}, electives: {}, cte: {}, notes: "", name:"", date:"", pathwayKey:"", electiveAssignments: {} };
 
   /* ---------------- Render helpers ---------------- */
   const checkSvg = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4 4 8-9" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function rowKey(prefix, groupTitle, idx){ return prefix+"::"+groupTitle+"::"+idx; }
+
+  /* ---------------- Pathway course -> Elective credit linking ----------------
+     Checking a pathway (Year N) or Optional Elective course fills it into the
+     first open slot in the core Electives group and counts it toward the
+     16 elective credits automatically, same as any other completed elective. */
+  const ELECTIVE_COUNT = 16;
+  function electiveKeyForIndex(idx){ return rowKey('core', 'Electives', idx); }
+
+  function findFreeElectiveSlot(){
+    for (let i = 0; i < ELECTIVE_COUNT; i++){
+      const v = state.core[electiveKeyForIndex(i)];
+      if (!v || !v.val) return i;
+    }
+    return -1;
+  }
+
+  function assignElectiveFromPathway(pwKey, courseText){
+    if (state.electiveAssignments[pwKey] !== undefined) return;
+    const idx = findFreeElectiveSlot();
+    if (idx === -1) return; // all 16 elective slots already in use
+    state.core[electiveKeyForIndex(idx)] = { val: courseText, done: true };
+    state.electiveAssignments[pwKey] = idx;
+  }
+
+  function unassignElectiveFromPathway(pwKey){
+    const idx = state.electiveAssignments[pwKey];
+    if (idx === undefined) return;
+    delete state.core[electiveKeyForIndex(idx)];
+    delete state.electiveAssignments[pwKey];
+  }
+
+  function clearAllPathwayElectiveAssignments(){
+    Object.keys(state.electiveAssignments).forEach(pwKey=>{
+      delete state.core[electiveKeyForIndex(state.electiveAssignments[pwKey])];
+    });
+    state.electiveAssignments = {};
+  }
 
   function buildRow(key, item, store){
     const row = document.createElement('div');
@@ -657,7 +693,15 @@
     const toggle = ()=>{
       store[key] = !store[key];
       row.classList.toggle('done', !!store[key]);
-      updateTotals();
+      if (key.indexOf('pw:') === 0){
+        // A pathway (Year N) or Optional Elective course was checked/unchecked:
+        // sync it into the core Electives group and re-render that column.
+        if (store[key]) assignElectiveFromPathway(key, item.t);
+        else unassignElectiveFromPathway(key);
+        renderCore();
+      } else {
+        updateTotals();
+      }
     };
     row.addEventListener('click', toggle);
     row.tabIndex = 0;
@@ -804,16 +848,18 @@
     sel.addEventListener('change', ()=>{
       state.pathwayKey = sel.value;
       state.pathway = {}; // switching pathways clears pathway-specific checks
+      clearAllPathwayElectiveAssignments(); // and any electives it had filled in
       renderPathway();
+      renderCore();
     });
   }
 
   /* ---------------- Top-level wiring ---------------- */
   /* ---------------- Fit-to-one-page printing ---------------- */
-  // Landscape US Letter minus the @page margin, in CSS px at 96dpi:
-  // (11in - 0.4in) * 96 = 1017.6 ; (8.5in - 0.4in) * 96 = 777.6
-  const PRINT_PAGE_W = 1017;
-  const PRINT_PAGE_H = 777;
+  // Portrait US Letter minus the @page margin, in CSS px at 96dpi:
+  // (8.5in - 0.4in) * 96 = 777.6 ; (11in - 0.4in) * 96 = 1017.6
+  const PRINT_PAGE_W = 777;
+  const PRINT_PAGE_H = 1017;
 
   function applyPrintScale(){
     const wrap = document.querySelector('.wrap');
@@ -827,7 +873,9 @@
     wrap.style.padding = '6px';
     const fullW = wrap.scrollWidth;
     const fullH = wrap.scrollHeight;
-    const scale = Math.min(PRINT_PAGE_W / fullW, PRINT_PAGE_H / fullH, 1);
+    // 3% safety margin so rounding differences between browsers/PDF engines
+    // never clip the last line off the bottom of the page.
+    const scale = Math.min(PRINT_PAGE_W / fullW, PRINT_PAGE_H / fullH, 1) * 0.93;
     wrap.style.transformOrigin = 'top left';
     wrap.style.transform = 'scale(' + scale + ')';
     outer.style.width = (fullW * scale) + 'px';
@@ -857,7 +905,7 @@
   });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
     if(!confirm('Clear every checkbox, elective and note on this plan?')) return;
-    state.core = {}; state.pathway = {}; state.cte = {}; state.notes='';
+    state.core = {}; state.pathway = {}; state.cte = {}; state.electiveAssignments = {}; state.notes='';
     document.getElementById('studentName').value='';
     document.getElementById('gradDate').value='';
     renderCore();
