@@ -333,6 +333,9 @@
       <p class="org">Idaho graduation requirements &middot; Class of 2027 &middot; all CTE pathways</p>
     </div>
     <div class="masthead-actions no-print">
+      <button class="btn" id="loadBtn" type="button" title="Reopen a student's previously saved progress file">Load Progress</button>
+      <input type="file" id="loadFileInput" accept="application/json,.json" hidden>
+      <button class="btn" id="saveBtn" type="button" title="Download this student's progress as a file you can reopen and update later">Save Progress</button>
       <button class="btn" id="resetBtn" type="button">Reset form</button>
       <button class="btn btn-primary" id="printBtn" type="button">Print / Save PDF</button>
     </div>
@@ -938,6 +941,76 @@
     document.getElementById('gradDate').value='';
     renderCore();
     renderPathway();
+  });
+
+  /* ---------------- Save / Load a student's progress to a file ----------------
+     There's no server behind this tool, so a student's record IS a file: Save
+     Progress downloads a small .json snapshot of everything filled in so far,
+     and Load Progress reopens one so you can keep going next semester. Keep
+     one file per student (e.g. in a shared drive folder) and treat "Save"
+     like "Save As" -- overwrite the same file each time you update a student. */
+  function safeFileStem(name){
+    const trimmed = (name || '').trim();
+    if (!trimmed) return 'student';
+    return trimmed.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'student';
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', ()=>{
+    const studentName = document.getElementById('studentName').value;
+    const gradDate = document.getElementById('gradDate').value;
+    const payload = {
+      itcaGradPlanSave: 1,
+      savedAt: new Date().toISOString(),
+      studentName, gradDate,
+      state: {
+        core: state.core, pathway: state.pathway, cte: state.cte,
+        notes: state.notes, pathwayKey: state.pathwayKey,
+        electiveAssignments: state.electiveAssignments, healthLinks: state.healthLinks,
+      },
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeFileStem(studentName) + '_ITCA_GradPlan.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('loadBtn').addEventListener('click', ()=>{
+    document.getElementById('loadFileInput').click();
+  });
+
+  document.getElementById('loadFileInput').addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // allow reloading the same filename later
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let payload;
+      try { payload = JSON.parse(reader.result); }
+      catch { alert('That file isn\'t a valid ITCA Graduation Plan save file.'); return; }
+      if (!payload || typeof payload !== 'object' || !payload.itcaGradPlanSave || !payload.state){
+        alert('That file isn\'t a valid ITCA Graduation Plan save file.');
+        return;
+      }
+      const s = payload.state;
+      state.core = s.core || {};
+      state.pathway = s.pathway || {};
+      state.cte = s.cte || {};
+      state.notes = s.notes || '';
+      state.pathwayKey = s.pathwayKey || '';
+      state.electiveAssignments = s.electiveAssignments || {};
+      state.healthLinks = s.healthLinks || {};
+      document.getElementById('studentName').value = payload.studentName || '';
+      document.getElementById('gradDate').value = payload.gradDate || '';
+      document.getElementById('pathwaySelect').value = state.pathwayKey || '';
+      renderPathway();
+      renderCore();
+    };
+    reader.readAsText(file);
   });
 
   buildSelect();
