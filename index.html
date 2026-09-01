@@ -378,7 +378,7 @@
 
   /* ---------------- Data ---------------- */
 
-  const SCIENCE_OPTIONS = ["Choose course…","Earth Science","Physical Science","Physics","Biology","Lab Science","Chemistry","Anatomy & Physiology","Environmental Science","Forensics","Biotechnology","Other"];
+  const SCIENCE_OPTIONS = ["Choose course…","Earth Science","Physical Science","Physics","Biology","Lab Science","Chemistry","Anatomy & Physiology","Environmental Science","Forensics","Biotechnology","Principles of Plant Science (S1)","Principles of Plant Science (S2)","Principles of Livestock & Poultry Production (S1)","Principles of Livestock & Poultry Production (S2)","Other"];
 
   // Core, non-pathway requirements. Every checkbox = 1 credit unless creditless:true.
   const CORE_COL1 = [
@@ -529,7 +529,7 @@
       label: "Medical Assisting",
       years: [
         { title:"Year 1", credits:"2 Credits", rows:[
-          {t:"Health Science II (Dynamic)"},
+          {t:"Health Science II"},
           {t:"Medical Terminology"},
         ]},
         { title:"Year 2", credits:"2/3 Credits", rows:[
@@ -560,7 +560,7 @@
       label: "Pharmacy Technician",
       years: [
         { title:"Year 1", credits:"2 Credits", rows:[
-          {t:"Health Science II (Dynamic)"},
+          {t:"Health Science II"},
           {t:"Medical Terminology"},
         ]},
         { title:"Year 2", credits:"2/3 Credits", rows:[
@@ -634,7 +634,7 @@
   }
 
   /* Health Science II is a named core requirement, not a generic elective --
-     checking it (or its pathway equivalent, e.g. "Health Science II (Dynamic)")
+     checking it (or its pathway equivalent)
      in the pathway column checks off the core Health Science II row directly
      instead of consuming an Elective slot. */
   const HEALTH_KEY = rowKey('core', 'Health', 0);
