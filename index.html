@@ -447,8 +447,8 @@
 
   <section class="idbar">
     <div class="field">
-      <label for="studentName">Student name</label>
-      <input type="text" id="studentName" placeholder="First and last name" autocomplete="off">
+      <label for="studentName">Student (first initial + last name)</label>
+      <input type="text" id="studentName" placeholder="e.g., J. Smith" autocomplete="off">
     </div>
     <div class="field">
       <label for="gradDate">Expected graduation date</label>
@@ -1133,8 +1133,23 @@
     return trimmed.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'student';
   }
 
+  /* FERPA: student names are always reduced to first initial + last name (e.g. "J. Smith"). */
+  function toInitialName(v){
+    const t = String(v || '').trim().replace(/\s+/g, ' ');
+    if (!t) return '';
+    if (t.indexOf(',') !== -1){ const p = t.split(','); return toInitialName(p.slice(1).join(' ') + ' ' + p[0]); }
+    const parts = t.split(' ');
+    if (parts.length === 1) return parts[0];
+    const first = parts[0].replace(/\./g, '');
+    return first.charAt(0).toUpperCase() + '. ' + parts.slice(1).join(' ');
+  }
+  (function(){
+    const el = document.getElementById('studentName');
+    el.addEventListener('blur', function(){ el.value = toInitialName(el.value); });
+  })();
+
   document.getElementById('saveBtn').addEventListener('click', ()=>{
-    const studentName = document.getElementById('studentName').value;
+    const studentName = toInitialName(document.getElementById('studentName').value);
     const gradDate = document.getElementById('gradDate').value;
     const payload = {
       itcaGradPlanSave: 1,
@@ -1183,7 +1198,7 @@
       state.electiveAssignments = s.electiveAssignments || {};
       state.healthLinks = s.healthLinks || {};
       state.commLinks = s.commLinks || {};
-      document.getElementById('studentName').value = payload.studentName || '';
+      document.getElementById('studentName').value = toInitialName(payload.studentName);
       document.getElementById('gradDate').value = payload.gradDate || '';
       document.getElementById('pathwaySelect').value = state.pathwayKey || '';
       cloudId = null; // a file load isn't tied to a shared-database record until explicitly saved there
@@ -1287,10 +1302,11 @@
   }
 
   async function cloudSave(){
-    const studentName = document.getElementById('studentName').value;
+    const studentName = toInitialName(document.getElementById('studentName').value);
+    document.getElementById('studentName').value = studentName;
     const gradDate = document.getElementById('gradDate').value;
     if (!studentName.trim()){
-      showToast("Enter the student's name before saving to the shared database.", {error:true});
+      showToast("Enter the student's first initial and last name before saving to the shared database.", {error:true});
       return;
     }
     const payloadState = {
@@ -1329,7 +1345,7 @@
       '<div class="modal-card">' +
         '<div class="modal-head"><h2>Load from shared database</h2>' +
           '<button class="modal-close" type="button" aria-label="Close">&times;</button></div>' +
-        '<div class="modal-search"><input type="text" placeholder="Search by student name…" id="cloudSearchInput" autocomplete="off"></div>' +
+        '<div class="modal-search"><input type="text" placeholder="Search by initial and last name…" id="cloudSearchInput" autocomplete="off"></div>' +
         '<div class="modal-list" id="cloudModalList"></div>' +
       '</div>';
     document.body.appendChild(overlay);
@@ -1346,7 +1362,7 @@
 
     function render(filter){
       const f = (filter || '').toLowerCase();
-      const filtered = rows.filter(function(r){ return (r.student_name || '').toLowerCase().indexOf(f) !== -1; });
+      const filtered = rows.filter(function(r){ return toInitialName(r.student_name).toLowerCase().indexOf(f) !== -1; });
       listEl.innerHTML = '';
       if (!filtered.length){
         listEl.innerHTML = '<div class="modal-empty">No matching students yet. Use "Save to Database" from that student\'s plan to add one.</div>';
@@ -1359,7 +1375,7 @@
         const pwLabel = pw ? pw.label : (r.pathway_key || 'No pathway selected');
         const updated = r.updated_at ? new Date(r.updated_at).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) : '';
         row.innerHTML =
-          '<div><div class="mrow-name">' + escapeHtml(r.student_name || '(unnamed)') + '</div>' +
+          '<div><div class="mrow-name">' + escapeHtml(toInitialName(r.student_name) || '(unnamed)') + '</div>' +
           '<div class="mrow-meta">' + escapeHtml(pwLabel) + (r.grad_date ? ' &middot; ' + escapeHtml(r.grad_date) : '') + '</div></div>' +
           '<div class="mrow-meta">Updated ' + escapeHtml(updated) + '</div>';
         row.addEventListener('click', async function(){
@@ -1394,7 +1410,7 @@
     state.electiveAssignments = s.electiveAssignments || {};
     state.healthLinks = s.healthLinks || {};
     state.commLinks = s.commLinks || {};
-    document.getElementById('studentName').value = row.student_name || '';
+    document.getElementById('studentName').value = toInitialName(row.student_name);
     document.getElementById('gradDate').value = row.grad_date || '';
     document.getElementById('pathwaySelect').value = state.pathwayKey || '';
     cloudId = row.id;
